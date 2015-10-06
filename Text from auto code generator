@@ -1,0 +1,31 @@
+### Week 1
+- Get familiar with D3JS
+- Project Goal
+Author your page content here [using GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/)
+
+### Week 2
+- Read code from last semester and summer
+- Understand pros and cons of the past project 
+- Take one of the input data sets in csv format and print a table
+
+### Week 3
+- Continued last weeks task
+- Set up IIS server on the Windows machine to be able to upload host website
+- Apache server on Linux for convenience
+- Set up a Github repository 
+
+### Week 4
+- Use the same csv from the past 2 weeks and make a stacked bar chart in d3js
+- Make search function to extract specific ID
+- The ID being compared should go to the bottom of the stack for easy comparison
+
+### Week 5
+- Host the website on [Purdue server](http://web.ics.purdue.edu/~awairaga/)
+- Host the weekly blog and the website on [Github](http://apoorvvw.github.io/VIP)
+- Practice D3JS and continue last times task
+
+
+You can @mention a GitHub username to generate a link to their profile. The resulting `<a>` element will link to the contributor’s GitHub Profile. For example: In 2007, Chris Wanstrath (@defunkt), PJ Hyett (@pjhyett), and Tom Preston-Werner (@mojombo) founded GitHub.
+
+### Support or Contact
+Having trouble with Pages? Check out our [documentation](https://help.github.com/pages) or [contact support](https://github.com/contact) and we’ll help you sort it out.
