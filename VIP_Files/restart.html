@@ -1,39 +1,90 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>Simple Stacked Bar Chart</title>
-        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
-        <script type="text/javascript" src="http://code.jquery.com/jquery-latest.min.js"></script>     
-        <style>
-            svg {
-                border: solid 1px #ccc;
-                font: 10px sans-serif;
-                shape-rendering: crispEdges;
-            }
+<head>
+<title>Simple Stacked Bar Chart</title>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
+<script type="text/javascript" src="http://code.jquery.com/jquery-latest.min.js"></script>     
+<script src="lib/jquery.js"></script>
+<script src="lib/bootstrap.js"></script>
+<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+<style>
+/* Popover */
+.popover {
+    border: 2px dotted red;
+}
 
+/* Popover Header */
+.popover-title {
+    background-color: #73AD21; 
+    color: #FFFFFF; 
+    font-size: 28px;
+    text-align:center;
+}
 
-.chart text {
+/* Popover Body */
+.popover-content {
+    background-color: coral;
+    color: #000000;
+    padding: 25px;
+}
+
+/* Popover Arrow */
+.arrow {
+    border-right-color: red !important;
+}
+body {
+  font: 10px sans-serif;
+}
+
+<!-- svg {
+    border: solid 1px #ccc;
+    font: 10px sans-serif;
+    shape-rendering: crispEdges;
+} -->
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.bar {
+  fill: steelblue;
+}
+
+.x.axis path {
+  display: none;
+}
+
+<!-- .chart text {
   fill: white;
   font: 10px sans-serif;
   text-anchor: end;
-}
-
+} -->
 
 </style>             
 </head>
 
 <body>
-        
+<div class="container">
+  <a href="#" data-toggle="popover" title="Popover Header" data-content="Some content inside the popover"></a>
+</div>  
+
 <div>
-<h2>Options: 197,198,200,213,216,218,219,222,229 </h2>
+<p>Options: 197,198,200,213,216,218,219,222,229 </p>
 <input type="text" id="id1">
-<input id="Search_btn" type="button" value="Add column" onclick="createChart(this.id);" />
-<input id="Remove_btn" type="button"value="Remove column" onclick="createChart(this.id);" />
+<input id="Search_btn" type="button" value="Add column" onclick="addCol(this.id);" />
+<input id="Remove_btn" type="button"value="Remove column" onclick="addCol(this.id);" />
 <input id="Add_Single" type="button"value="View Records" onclick="location.href='http://web.ics.purdue.edu/~awairaga/index.html';"/>
 <br>
 <p> Click "Add Column" button to display chart</p>
 </div>
+
 <br></br>
+
 <div id="viz"></div>
 
 
@@ -42,49 +93,41 @@
   // GLOBAL VARIABLES    
   var w = 960,
   h = 500,
-  input_data, org_data, selected ;
-
-  x = d3.scale.ordinal().rangeRoundBands([0, w-50])
-  y = d3.scale.linear().range([0, h-50])
-  var color = d3.scale.ordinal().range(['rgb(84,48,5)','rgb(140,81,10)','rgb(191,129,45)','rgb(223,194,125)','rgb(199,234,229)','rgb(128,205,193)','rgb(53,151,143)','rgb(1,102,94)','rgb(0,60,48)','rgb(103,0,31)','rgb(178,24,43)','rgb(214,96,77)','rgb(244,165,130)','rgb(209,229,240)','rgb(146,197,222)','rgb(67,147,195)','rgb(33,102,172)','rgb(5,48,97)','rgb(64,0,75)','rgb(118,42,131)','rgb(153,112,171)','rgb(194,165,207)','rgb(231,212,232)','rgb(135,135,135)','rgb(77,77,77)','rgb(26,26,26)','rgb(2,129,138)','rgb(1,108,89)','rgb(1,70,54)'])
-
-  var xAxis = d3.svg.axis()
-            .scale(x)
-            .orient("bottom");
-  var yAxis = d3.svg.axis()
-            .scale(y)
-            .orient("left")
-            .tickFormat(d3.format(".2s"));
+  input_data, org_data = [], selected = [] , loc = 0, flag_redraw = 1;
 
   var margin = {
-  top: 20,
+  top: 40,
   right: 20,
   bottom: 30,
   left: 40
   },
-  width = 1300 - margin.left - margin.right,
-  height = 500 - margin.top - margin.bottom;
+  width = window.innerWidth - margin.left - margin.right  - 150,
+  height = window.innerHeight - margin.top - margin.bottom- 100;
 
   var x = d3.scale.ordinal().rangeRoundBands([0, width - 300], .1);
   var y = d3.scale.linear().rangeRound([height, 0]);
+
+  //x = d3.scale.ordinal().rangeRoundBands([0, w-50])
+  //y = d3.scale.linear().range([0, h-50])
+  var color = d3.scale.ordinal().range(['rgb(84,48,5)','rgb(140,81,10)','rgb(191,129,45)','rgb(223,194,125)','rgb(199,234,229)','rgb(128,205,193)','rgb(53,151,143)','rgb(1,102,94)','rgb(0,60,48)','rgb(103,0,31)','rgb(178,24,43)','rgb(214,96,77)','rgb(244,165,130)','rgb(209,229,240)','rgb(146,197,222)','rgb(67,147,195)','rgb(33,102,172)','rgb(5,48,97)','rgb(64,0,75)','rgb(118,42,131)','rgb(153,112,171)','rgb(194,165,207)','rgb(231,212,232)','rgb(135,135,135)','rgb(77,77,77)','rgb(26,26,26)','rgb(2,129,138)','rgb(1,108,89)','rgb(1,70,54)'])
+
+  var xAxis = d3.svg.axis()
+                    .scale(x)
+                    .orient("bottom");
+
+  var yAxis = d3.svg.axis()
+                    .scale(y)
+                    .orient("left")
+                    .tickFormat(d3.format(".2s"));
   
   // create canvas
-  /*var svg = d3.select("#viz").append("svg:svg")
+  var svg = d3.select("#viz").append("svg:svg")
                 .attr("class", "chart")
                 .attr("width", w)
                 .attr("height", h )
                 .append("svg:g")
                 .attr("transform", "translate(10,470)");
-  */
-
-  var svg = //d3.select("body").append("svg")
-            d3.select("#viz").append("svg:svg")
-                .attr("width", width + margin.left + margin.right)
-                .attr("height", height + margin.top + margin.bottom)
-                .append("g")
-                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-
+  
   /********************************************
   *
   * Description: Download file and save it 
@@ -101,18 +144,37 @@
       success:  loadData()
     })
   });
+  
   /********************************************
   *
   * Description: Download file and save it 
   *              in a global variable
   *
   ********************************************/
+  
   function loadData(){
       d3.csv("crunchbase-quarters1.csv", function(error,dataset) {
-          org_data = dataset;
-          input_data = org_data;
+          input_data = dataset;
           if (error) throw error; 
       });
+  }
+  
+  /********************************************
+  *
+  * Description:  Deep copy 2 objects             
+  *
+  ********************************************/
+
+
+  function deepCopy(obj) {
+    if (typeof obj === 'object') {
+        var out = {}, i;
+        for ( i in obj ) {
+            out[i] = arguments.callee(obj[i]);
+        }
+        return out;
+    }
+    return obj;
   }
 
   /********************************************
@@ -122,12 +184,21 @@
   *
   ********************************************/
   function createChart(id) {
-    console.log("--------- ORIGINAL DATA ---------")
-    console.log(org_data);
 
-    color.domain(d3.keys(org_data[0]).filter(function(key) {
+    if(d3.select('svg')[0][0] != null){
+     d3.select('svg').remove();
+    }
+    var svg = //d3.select("body").append("svg")
+            d3.select("#viz").append("svg:svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+    
+    if(flag_redraw)
+      color.domain(d3.keys(org_data[0]).filter(function(key) {
           return key !== "ID";
-        }));
+      }));
     
     var xAxis = d3.svg.axis()
                     .scale(x)
@@ -138,12 +209,14 @@
                     .orient("left")
                     .tickFormat(d3.format(".2s"));
 
+
     // Map the data to individual rectangles for the stacked bar
     org_data.forEach(function(d) {
       var y0 = 0;
       d.crimes = color.domain().map(function(name) {
-        return {
+        return { 
           name: name, // Name of the crime
+          id: d.ID,
           y0: y0,     // Lower bound for the individual rectangle for the given crime
           y1: y0 += +d[name]  // Upper bound.
         };
@@ -158,27 +231,220 @@
     x.domain( org_data.map(function(d) {  // x domain is all IDs
       return d.ID; 
     }));
-    y.domain([0, d3.max(data, function(d) { // Y domain is 0 to sum of all crimes for that ID, which is stores in d.Total for all the IDs
+    y.domain([0, d3.max(org_data, function(d) { // Y domain is 0 to sum of all crimes for that ID, which is stores in d.Total for all the IDs
       return d.total; 
     })]);
 
+    svg.append("g")
+        .attr("class", "x axis")
+        .attr("transform", "translate(0," + height + ")")
+        .call(xAxis)
+        .on("mouseover", function(){
+           d3.select(this).style("fill", "red") })
+        .on("mouseout", function(){d3.select(this).style("fill", "black")});
+
+    svg.append("g")
+        .attr("class", "y axis")
+        .call(yAxis)
+        .append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("y", 6)
+        .attr("dy", ".71em")
+        .style("text-anchor", "end")
+        .text("Crimes");
     
+    var prev_color;
+
+    var state = svg.selectAll(".state")
+        .data(org_data)
+        .enter().append("g")
+        .attr("class", "g")
+        .attr("transform", function(d) { return "translate(" + x(d.ID) + ",0)"; });
+
+
+    state.selectAll("rect")
+        .data(function(d) { return d.crimes; })
+        .enter().append("rect")
+        .attr("width", x.rangeBand())
+        .attr("y", function(d) { return y(d.y1); })
+        .attr("height", function(d) { return y(d.y0) - y(d.y1); })
+        .style("fill", function(d) { return color(d.name); })
+        .on("mouseover", function (d) { showPopover.call(this, d); })
+        .on("mouseout",  function (d) { removePopovers(); })
+        .on("mousedown", function (d) { 
+          removePopovers()
+          restructureData.call(this, d); 
+        });
+        /*.on("mouseover", function(){ 
+          prev_color = d3.select(this).style("fill")
+          d3.select(this).style("stroke-width", 25)
+          d3.select(this).style("fill", "rgb(100,0,0)")
+          console.log(d3.select(this)[0][0])
+        })
+        .on("mouseout", function() { 
+          d3.select(this).style("fill", prev_color) 
+        });*/
+
+    var legend = svg.selectAll(".legend")
+        .data(color.domain().slice().reverse())
+        .enter().append("g")
+        .attr("class", "legend")
+        .attr("transform", function(d, i) { return "translate(0," + i * 20 + ")"; });
+
+    legend.append("rect")
+        .attr("x", width - 18)
+        .attr("width", 18)
+        .attr("height", 18)
+        .style("fill", color);
+
+    legend.append("text")
+        .attr("x", width - 24)
+        .attr("y", 9)
+        .attr("dy", ".35em")
+        .style("text-anchor", "end")
+        .text(function(d) { return d; })   
 
 
   }
   /********************************************
   *
-  * Description: Download file and save it 
-  *              in a global variable
+  * Description: Creates the pop-overs
   *
   ********************************************/
-  function addCols (mat) {
+  function showPopover (d) {
+    console.log(d.name);
+    $(this).popover({
+      title: d.name,
+      placement: 'auto top',
+      container: 'body',
+      trigger: 'manual',
+      html : true,
+      content: function() { 
+        return "ID: " + d.id + 
+               "<br/>Number of Crimes: " + d3.format(",")(d.y1 - d.y0); }
+    });
+    $(this).popover('show')
+  }
+  function removePopovers () {
+    $('.popover').each(function() {
+      $(this).remove();
+    }); 
+  }
+  function restructureData (d) {
+    // This function swaps the lowest crime with the one which is clicked
+    
+    /* Problem with this method is that it will have the wrong the y and y0 values. 
+       I need to completely remap the whole column. For this I might only have to swap the things in 
 
-      /* ...
-         body
-      ...*/
+    var a ;
+    org_data.forEach(function (org_dat) { // Do this for all the IDs
+      org_dat.crimes.forEach(function(crime_dat,i) {  // Check the crimes thing in all the 
+        if(crime_dat.name == d.name) { 
+          console.log(crime_dat.name);
+          a = i;
+        }
+     }});
+    --------------------------------------------------------------------------------------------------
+    
+    1. recreate org_data by deep copying input_data
+    2. change the order of array "color.domain()" since I cant change the order of org data
+    3. Put condition for rewriting color.domain() i.e. if org_data is null
 
-      return mat;           
+    */
+    /*var i,j;
+    loc = 0;
+    org_data.length = 0;
+    for ( j = 0; j < selected.length; j++ ) {
+      column = selected[j];
+      for (i = 0; i < len; i++) {
+        if (input_data[i].ID == column) {
+          org_data[loc] = deepCopy(input_data[i]);
+          loc++;
+          break;
+       }
+      }
+    }
+    
+    console.log("restructureData")
+    console.log(org_data)*/
+    var a , temp;
+    flag_redraw = 0;
+    
+    console.log(color.domain());
+    color.domain().forEach(function(crime_dat,i) {  // Check the crimes thing in all the 
+      if(crime_dat == d.name) { 
+        console.log(crime_dat.name);
+        a = i;
+      }
+   });
+
+   temp = color.domain()[0]
+   color.domain()[0] = color.domain()[a]
+   color.domain()[a] = temp;
+   createChart(3); 
+   // At this point I have the clicked index in a and need to swap it with bottom 
+
+  }  
+  /********************************************
+  *
+  * Description: Not being used anymore. Rewritten at the end
+  *
+  ********************************************/
+  function addCols (val) {
+    var reserve = [];
+    var columnNo = document.getElementById("id1").value;
+    // Check if the input is zero 
+    if (document.getElementById("id1").value == ""){ 
+      alert("Enter a value"); 
+      return;
+    }else{ // Else Check which button is pressed
+
+      var i, len = input_data.length;
+      // Empty the current org_data
+      while(org_data.length > 0) {
+        org_data.pop();
+      }
+
+      loc = 0; // Reset the loc to 1 so that it can be recalculated
+      org_data[0] = deepCopy(input_data[0]);
+      
+      
+      if ( val ==  'Remove_btn') {
+        for (i = 0; i < org_data.length ; i++) {
+          if (org_data[i].ID == document.getElementById("id1").value) {
+            org_data.splice(i,1);//[loc] = input_data[i];
+            console.log("Removed: ")
+            console.log(org_data)
+            loc--;
+            break;
+          }
+        }
+      } else if ( val ==  'Search_btn') {
+          selected.push(columnNo);
+          for(i=0;i<selected.length;i++){
+            reserve[i] = selected[i];
+          }  
+        var num = reserve.pop()
+
+        while(reserve.length!=0) {
+          for (i = 0; i < len; i++) {
+              //console.log(input_data[i].ID +  "  : " +document.getElementById("id1").value )
+              if (input_data[i].ID == num) {
+                org_data[loc] = deepCopy(input_data[i]);
+                //delete org_data[loc].Total;
+                loc++;
+              break;
+              }
+          }
+          num = reserve.pop();
+        }
+        //console.log("--------- ORIGINAL DATA ---------")
+        //console.log(org_data);          
+      }
+      console.log("after manipulation")
+      console.log(org_data)         
+      createChart(val)
+    } 
   }
   /********************************************
   *
@@ -251,40 +517,90 @@
               })
               .style("font-size", "12px");
             }); 
+            //Print bar chart
+            console.log(newArr);
+            var data = [4, 8, 15, 16, 23, 42];
 
+            var width = 420,
+                barHeight = 20;
 
+            var x = d3.scale.linear()
+                .domain([0, d3.max(data)])
+                .range([0, width]);
 
-console.log(newArr);
-var data = [4, 8, 15, 16, 23, 42];
+            var chart = d3.select(".chart")
+                .attr("width", width)
+                .attr("height", barHeight * data.length);
 
-var width = 420,
-    barHeight = 20;
+            var bar = chart.selectAll("g")
+                .data(data)
+              .enter().append("g")
+                .attr("transform", function(d, i) { return "translate(0," + i * barHeight + ")"; });
 
-var x = d3.scale.linear()
-    .domain([0, d3.max(data)])
-    .range([0, width]);
+            bar.append("rect")
+                .attr("width", x)
+                .attr("height", barHeight - 1);
 
-var chart = d3.select(".chart")
-    .attr("width", width)
-    .attr("height", barHeight * data.length);
+            bar.append("text")
+                .attr("x", function(d) { return x(d) - 3; })
+                .attr("y", barHeight / 2)
+                .attr("dy", ".35em")
+                .text(function(d) { return d; });
+  }
+  /********************************************
+  *
+  * Description: Adds and removes columns
+  *
+  ********************************************/
+  function addCol (val) {
+    var reserve = [];
+    var columnNo = document.getElementById("id1").value;
+    var col = columnNo.split(',');
+    for ( i = 0 ; i < col.length; i++)
+      col[i]= + col[i].trim();
+    flag_redraw = 1;
+    // Check if the input is zero 
+    if (document.getElementById("id1").value == ""){ 
+      alert("Enter a value"); 
+      return;
+    }else{ // Else Check which button is pressed
 
-var bar = chart.selectAll("g")
-    .data(data)
-  .enter().append("g")
-    .attr("transform", function(d, i) { return "translate(0," + i * barHeight + ")"; });
+      var i,j, len = input_data.length;
 
-bar.append("rect")
-    .attr("width", x)
-    .attr("height", barHeight - 1);
-
-bar.append("text")
-    .attr("x", function(d) { return x(d) - 3; })
-    .attr("y", barHeight / 2)
-    .attr("dy", ".35em")
-    .text(function(d) { return d; });
+      //loc = 0; // Reset the loc to 1 so that it can be recalculated
+       org_data[0] = deepCopy(input_data[0]);
+     
+      if ( val ==  'Remove_btn') {
+        for ( j = 0 ; j< col.length; j++) {
+          for (i = 0; i < org_data.length ; i++) {
+            if (org_data[i].ID == col[j]) {
+              org_data.splice(i,1);//[loc] = input_data[i];
+              console.log("Removed: ")
+              console.log(org_data)
+              loc--;
+              break;
+            }
+          }
+        }
+      } else if ( val ==  'Search_btn') {
+          for ( j = 0 ; j< col.length; j++) {
+            selected.push(col[j]);
+            for (i = 0; i < len; i++) {
+              if (input_data[i].ID == col[j]) {
+                org_data[loc] = deepCopy(input_data[i]);
+                loc++;
+                break;
+              }
+            }
+            //console.log("--------- ORIGINAL DATA ---------")
+            //console.log(org_data);          
+          }
+        }
+      console.log("after manipulation")
+      console.log(org_data)         
+      createChart(val)
+    } 
   }
         </script>
-
-      <svg class="chart"></svg>
     </body>
 </html>
