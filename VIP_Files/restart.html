@@ -37,13 +37,17 @@
 body {
   font: 10px sans-serif;
 }
+.bar {
+  fill: steelblue;
+}
 
-<!-- svg {
-    border: solid 1px #ccc;
-    font: 10px sans-serif;
-    shape-rendering: crispEdges;
-} -->
+.bar:hover {
+  fill: brown;
+}
 
+.axis {
+  font: 10px sans-serif;
+}
 .axis path,
 .axis line {
   fill: none;
@@ -51,19 +55,9 @@ body {
   shape-rendering: crispEdges;
 }
 
-.bar {
-  fill: steelblue;
-}
-
 .x.axis path {
   display: none;
 }
-
-<!-- .chart text {
-  fill: white;
-  font: 10px sans-serif;
-  text-anchor: end;
-} -->
 
 </style>             
 </head>
@@ -78,7 +72,7 @@ body {
 <input type="text" id="id1">
 <input id="Search_btn" type="button" value="Add column" onclick="addCol(this.id);" />
 <input id="Remove_btn" type="button"value="Remove column" onclick="addCol(this.id);" />
-<input id="Add_Single" type="button"value="View Records" onclick="location.href='http://web.ics.purdue.edu/~awairaga/index.html';"/>
+<input id="Add_Single" type="button"value="View Records" onclick="individualChart(this.id);"/>
 <br>
 <p> Click "Add Column" button to display chart</p>
 </div>
@@ -86,7 +80,7 @@ body {
 <br></br>
 
 <div id="viz"></div>
-
+<svg class="chart"></svg>
 
 <script type="text/javascript">
   
@@ -98,12 +92,12 @@ body {
   var margin = {
   top: 40,
   right: 20,
-  bottom: 30,
+  bottom: 80,
   left: 40
   },
   width = window.innerWidth - margin.left - margin.right  - 150,
   height = window.innerHeight - margin.top - margin.bottom- 100;
-
+  var drag;
   var x = d3.scale.ordinal().rangeRoundBands([0, width - 300], .1);
   var y = d3.scale.linear().rangeRound([height, 0]);
 
@@ -209,6 +203,25 @@ body {
                     .orient("left")
                     .tickFormat(d3.format(".2s"));
 
+    /*
+    
+    Tried two types of methods for drag. Both didnt work with various sub-variations
+
+    drag = d3.behavior.drag()
+                  .origin(function(d) { return d; })
+                  .on("dragstart", dragstarted)
+                  .on("drag", dragged)
+                  .on("dragend", dragended);
+
+    drag = d3.behavior.drag()
+      .on("drag", function(d,i) {
+          d.x += d3.event.dx
+          d.y += d3.event.dy
+          console.log(d.x);          
+          d3.select(this).attr("transform", function(d,i){
+              return "translate(" + [ d.x,d.y ] + ")"
+          })
+      });                  */
 
     // Map the data to individual rectangles for the stacked bar
     org_data.forEach(function(d) {
@@ -239,9 +252,14 @@ body {
         .attr("class", "x axis")
         .attr("transform", "translate(0," + height + ")")
         .call(xAxis)
-        .on("mouseover", function(){
-           d3.select(this).style("fill", "red") })
-        .on("mouseout", function(){d3.select(this).style("fill", "black")});
+        .on("mouseover", function (d) {
+           d3.select(this).style("fill", "red") 
+           //console.log(d)
+         })
+        .on("mouseout", function (d) {
+          d3.select(this).style("fill", "black") 
+          //console.log(d)
+        });
 
     svg.append("g")
         .attr("class", "y axis")
@@ -259,9 +277,11 @@ body {
         .data(org_data)
         .enter().append("g")
         .attr("class", "g")
-        .attr("transform", function(d) { return "translate(" + x(d.ID) + ",0)"; });
-
-
+        .attr("transform", function(d) { return "translate(" + x(d.ID) + ",0)"; })
+        .attr("cursor","move");
+        // .call(drag) 
+        //  tried to drag here so all  the "rect" in the group would move. But apparently that doesnt work either. 
+        
     state.selectAll("rect")
         .data(function(d) { return d.crimes; })
         .enter().append("rect")
@@ -272,18 +292,20 @@ body {
         .on("mouseover", function (d) { showPopover.call(this, d); })
         .on("mouseout",  function (d) { removePopovers(); })
         .on("mousedown", function (d) { 
-          removePopovers()
-          restructureData.call(this, d); 
-        });
-        /*.on("mouseover", function(){ 
-          prev_color = d3.select(this).style("fill")
+          removePopovers();		    
+          //restructureData.call(this, d); 
+        })
+        // .attr("cursor","move")
+        .on("mouseover", function(){
+           prev_color = d3.select(this).style("fill")
           d3.select(this).style("stroke-width", 25)
           d3.select(this).style("fill", "rgb(100,0,0)")
-          console.log(d3.select(this)[0][0])
+          //console.log(d3.select(this)[0][0])
         })
         .on("mouseout", function() { 
           d3.select(this).style("fill", prev_color) 
-        });*/
+        });
+        //.call(drag);
 
     var legend = svg.selectAll(".legend")
         .data(color.domain().slice().reverse())
@@ -306,13 +328,46 @@ body {
 
 
   }
+function dragstarted(d) {
+  d3.event
+    .sourceEvent
+    .stopPropagation();
+  d3.select(this)
+    .classed("dragging", true);
+}
+
+function dragged(d) {
+  /* 
+     ->  These are the sub-variations I tried for the drag functionality
+     ->  animVal Always returns a constant 
+     ->  d3.event.x always gave 0
+     ->  d3.event.sourceEvent.x gave a position relative to the click event. It also depended on the size of the window. I could not figure out how. 
+
+  */
+
+  //console.log("rect.x.animVal.value: ",this.x.animVal.value);
+  //console.log("this ",this.x);
+  // console.log("d3.event.y",d3.event.sourceEvent.y);
+  // console.log("d3.event.x",d3.event.sourceEvent.x);
+
+
+  d3.select(this)
+    .attr("x", d3.event.sourceEvent.x - 170)
+    .attr("y", d3.event.sourceEvent.y - 150);   // Tried to hard code the offset but the value depends on the source of the click event and hence offset of the actual rect from the cursor actually changes a lot 
+}
+
+function dragended(d) {
+  d3.select(this)
+    .classed("dragging", false);
+}
+
   /********************************************
   *
   * Description: Creates the pop-overs
   *
   ********************************************/
   function showPopover (d) {
-    console.log(d.name);
+    //console.log(d.name);
     $(this).popover({
       title: d.name,
       placement: 'auto top',
@@ -370,10 +425,10 @@ body {
     var a , temp;
     flag_redraw = 0;
     
-    console.log(color.domain());
+    //console.log(color.domain());
     color.domain().forEach(function(crime_dat,i) {  // Check the crimes thing in all the 
       if(crime_dat == d.name) { 
-        console.log(crime_dat.name);
+        //console.log(crime_dat.name);
         a = i;
       }
    });
@@ -387,7 +442,172 @@ body {
   }  
   /********************************************
   *
-  * Description: Not being used anymore. Rewritten at the end
+  * Description: Download file and save it 
+  *              in a global variable
+  *
+  ********************************************/
+  function individualChart(id) {
+
+    if(d3.select('svg')[0][0] != null){
+     d3.select('svg').remove();
+    }
+
+    //var margin = {top: 20, right: 20, bottom: 80, left: 40},
+        //width = 960 - margin.left - margin.right,
+        //height = 550 - margin.top - margin.bottom;
+
+    var x = d3.scale.ordinal()
+        .rangeRoundBands([0, width], .1);
+
+    var y = d3.scale.linear()
+        .range([height, 0]);
+
+    var xAxis = d3.svg.axis()
+        .scale(x)
+        .orient("bottom");
+
+    var yAxis = d3.svg.axis()
+        .scale(y)
+        .orient("left")
+        .ticks(10);
+
+    var svg = //d3.select("body").append("svg")
+        d3.select("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    d3.csv("crunchbase-quarters1.csv", function(error, data) {
+
+    var columnNo = document.getElementById("id1").value;
+    if (columnNo == null){
+      alert("Empty search");
+      return;
+    }
+    var i;
+    for (i = 0; i < data.length; i++) {
+      if (data[i].ID == columnNo) {
+        break;
+      }
+    }
+
+    var arr = [] , obj = data[i];
+      for (var key in obj) {
+          if (obj.hasOwnProperty(key)) {
+              var ob;
+              ob = { number: 0, crime: "Name" };
+              ob.crime = key;
+              ob.number = +obj[key];
+              arr.push(ob);
+          }
+    };      
+      if (error) throw error;      
+      x.domain(d3.keys(data[i]).filter(function(key) {return key !== "ID"; }));
+      y.domain([0, data[i].Total]);
+
+      svg.append("g")
+          .attr("class", "x axis")
+          .attr("transform", "translate(0," + height + ")")
+          .call(xAxis)
+          .selectAll("text")  
+            .style("text-anchor", "end")
+            .attr("dx", "-.8em")
+            .attr("dy", ".15em")
+            .attr("transform", "rotate(-45)" );
+
+      svg.append("g")
+          .attr("class", "y axis")
+          .call(yAxis)
+        .append("text")
+          .attr("transform", "rotate(-90)")
+          .attr("y", 6)
+          .attr("dy", ".71em")
+          .style("text-anchor", "end")
+          .text("Frequency");
+
+      var result = arr.join(',');
+      svg.selectAll(".bar")
+          .data(arr)
+        .enter().append("rect")
+          .attr("class", "bar")
+          .attr("x", function(d) { 
+            return x(d.crime); })
+          .attr("width", x.rangeBand())
+          .attr("y", function(d) { 
+            return y(d.number); })
+          .attr("height", function(d) { return height - y(d.number); });
+    });
+
+  }
+  function type(d) {
+    d.Total = +d.Total;
+    return d;
+  }
+  /********************************************
+  *
+  * Description: Adds and removes columns
+  *  So this function basically changes orgData
+  *  and redraws the chart. 
+
+  *  What I want to do next is when flag_redraw is 
+  *  set, I need to transform the chart instead of 
+  *  deleting it and redrawing it
+  *
+  ********************************************/
+  function addCol (val) {
+    var reserve = [];
+    var columnNo = document.getElementById("id1").value;
+    var col = columnNo.split(',');
+    for ( i = 0 ; i < col.length; i++)
+      col[i]= + col[i].trim();
+    flag_redraw = 1;
+    // Check if the input is zero 
+    if (document.getElementById("id1").value == ""){ 
+      alert("Enter a value"); 
+      return;
+    }else{ // Else Check which button is pressed
+
+      var i,j, len = input_data.length;
+
+      //loc = 0; // Reset the loc to 1 so that it can be recalculated
+       org_data[0] = deepCopy(input_data[0]);
+     
+      if ( val ==  'Remove_btn') {
+        for ( j = 0 ; j< col.length; j++) {
+          for (i = 0; i < org_data.length ; i++) {
+            if (org_data[i].ID == col[j]) {
+              org_data.splice(i,1);//[loc] = input_data[i];
+              console.log("Removed: ")
+              console.log(org_data)
+              loc--;
+              break;
+            }
+          }
+        }
+      } else if ( val ==  'Search_btn') {
+          for ( j = 0 ; j< col.length; j++) {
+            selected.push(col[j]);
+            for (i = 0; i < len; i++) {
+              if (input_data[i].ID == col[j]) {
+                org_data[loc] = deepCopy(input_data[i]);
+                loc++;
+                break;
+              }
+            }
+            //console.log("--------- ORIGINAL DATA ---------")
+            //console.log(org_data);          
+          }
+        }
+      console.log("after manipulation")
+      console.log(org_data)         
+      createChart(val)
+    } 
+  }
+
+  /********************************************
+  *
+  * Description: Not being used anymore. Rewritten at the above
   *
   ********************************************/
   function addCols (val) {
@@ -441,161 +661,6 @@ body {
         //console.log("--------- ORIGINAL DATA ---------")
         //console.log(org_data);          
       }
-      console.log("after manipulation")
-      console.log(org_data)         
-      createChart(val)
-    } 
-  }
-  /********************************************
-  *
-  * Description: Download file and save it 
-  *              in a global variable
-  *
-  ********************************************/
-  function doFunction() {
-      if(d3.select('table')[0][0] != null){
-       d3.select('table').remove();
-      }            
-      var newArr = [];
-      //alert(document.getElementById("id1").value);
-      d3.text("crunchbase-quarters1.csv", function(datasetText) {
-
-          parsedCSV = d3.csv.parseRows(datasetText);
-          var row0 = parsedCSV[0][0]
-          var len = parsedCSV.length
-          /************************************************************************/
-
-          // Create a table using d3js
-
-          /************************************************************************/
-          var i = 0 , loc = 0, c = 1;
-
-          newArr[0] = parsedCSV[0];
-          for ( i = 0 ; i<len ; i++) {
-            //console.log(parsedCSV[i][0] + "  " + document.getElementById("id1").value);
-            if ( parsedCSV[i][0] == document.getElementById("id1").value) {
-              //alert("Found :" + i);
-              newArr[c] = parsedCSV[i];
-              c++;
-              break;
-            }
-          }
-          //console.log(newArr)
-          sampleHTML = d3.select("body")
-              .append("table")
-              .style("border-collapse", "collapse")
-              .style("border", "2px black solid")
-              .style("background-color", "white")
-              .selectAll("tr")
-              .data(newArr)
-              .enter().append("tr")
-
-              .selectAll("td")
-              .data(function(d) {
-                  return d;
-              })
-              .enter().append("td")
-              .style("border", "1px black solid")
-              .style("padding", "5px")
-              .style("background-color", "white")
-              .on("mouseover", function() {
-                  d3.select(this)
-                      .transition()
-                      .delay(0)
-                      .duration(300)
-                      .style("background-color", "cyan");
-              })
-              .on("mouseout", function() {
-                  d3.select(this)
-                      .transition()
-                      .delay(0)
-                      .duration(600)
-                      .style("background-color", "white");
-              })
-              .text(function(d) {
-                  return d;
-              })
-              .style("font-size", "12px");
-            }); 
-            //Print bar chart
-            console.log(newArr);
-            var data = [4, 8, 15, 16, 23, 42];
-
-            var width = 420,
-                barHeight = 20;
-
-            var x = d3.scale.linear()
-                .domain([0, d3.max(data)])
-                .range([0, width]);
-
-            var chart = d3.select(".chart")
-                .attr("width", width)
-                .attr("height", barHeight * data.length);
-
-            var bar = chart.selectAll("g")
-                .data(data)
-              .enter().append("g")
-                .attr("transform", function(d, i) { return "translate(0," + i * barHeight + ")"; });
-
-            bar.append("rect")
-                .attr("width", x)
-                .attr("height", barHeight - 1);
-
-            bar.append("text")
-                .attr("x", function(d) { return x(d) - 3; })
-                .attr("y", barHeight / 2)
-                .attr("dy", ".35em")
-                .text(function(d) { return d; });
-  }
-  /********************************************
-  *
-  * Description: Adds and removes columns
-  *
-  ********************************************/
-  function addCol (val) {
-    var reserve = [];
-    var columnNo = document.getElementById("id1").value;
-    var col = columnNo.split(',');
-    for ( i = 0 ; i < col.length; i++)
-      col[i]= + col[i].trim();
-    flag_redraw = 1;
-    // Check if the input is zero 
-    if (document.getElementById("id1").value == ""){ 
-      alert("Enter a value"); 
-      return;
-    }else{ // Else Check which button is pressed
-
-      var i,j, len = input_data.length;
-
-      //loc = 0; // Reset the loc to 1 so that it can be recalculated
-       org_data[0] = deepCopy(input_data[0]);
-     
-      if ( val ==  'Remove_btn') {
-        for ( j = 0 ; j< col.length; j++) {
-          for (i = 0; i < org_data.length ; i++) {
-            if (org_data[i].ID == col[j]) {
-              org_data.splice(i,1);//[loc] = input_data[i];
-              console.log("Removed: ")
-              console.log(org_data)
-              loc--;
-              break;
-            }
-          }
-        }
-      } else if ( val ==  'Search_btn') {
-          for ( j = 0 ; j< col.length; j++) {
-            selected.push(col[j]);
-            for (i = 0; i < len; i++) {
-              if (input_data[i].ID == col[j]) {
-                org_data[loc] = deepCopy(input_data[i]);
-                loc++;
-                break;
-              }
-            }
-            //console.log("--------- ORIGINAL DATA ---------")
-            //console.log(org_data);          
-          }
-        }
       console.log("after manipulation")
       console.log(org_data)         
       createChart(val)
