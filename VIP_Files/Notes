@@ -1,0 +1,81 @@
+WEEK 8
+
+    1. Search
+
+2. Sort and push to the bottom most 
+
+3. jqueryui.com/autocomplete/#remote
+
+    4. And group the crimes maybe - http://colorbrewer2.org/
+        choose 2 sets of 11
+
+    5. Textbox to have a value of the y axis - https://gist.github.com/phoebebright/3098488
+
+/************************************************************************/
+
+WEEK 9
+
+    1. Sort and push to the bottom most 
+
+    3. Async = false;  // call ----- Document ready funtion
+
+    4. Use ajax call to load the data
+
+	5. GET CURSOR location for changing the y axis whn clicked on a particular coulmn
+
+	2. jqueryui.com/autocomplete/#remote    <!-- copy code -->
+
+	6. Comma seperated search for multiple ids
+
+	7.  Defualt y axis limit when data is null
+
+    8. Make a table and chart for a individual officer
+
+/************************************************************************/
+
+WEEK10
+
+	HighLight selected ID
+
+	put svg insidse a div so you can make 2 svgs with different names
+    
+/************************************************************************/
+
+WEEK12
+
+    1. Window size
+
+2. When you click and move it down it should go back to original location which it was before	 -> split the mapping part
+
+    3. remove old pop up on click
+
+    4. Stacked bar chart in place of the current chart for individual officers
+
+5. (i)  Radio button for grouped or individual ----> make a transition
+   (ii) Also when clicked on the table should also change the grouped to individuals
+
+6. use transform instead redraw
+
+/************************************************************************/
+
+1. Initial 
+2. ToolTip , Comparison at the bottom
+3. Individual Officer
+4. Table
+
+GOAL
+RESULT
+not all explanations
+ -> describe the data : sample data which I used -> attributes and what the numbers stand for. 
+ -> used d3 and what features of d3 I used
+Write about the future if I cant fill out the space
+
+Font 28
+
+Contact Mahesh and Asheem about the font size after writing 
+
+/************************************************************************/
+
+1. Dragging function **
+    -> Dragging the whole stack of rects I selected
+    -> Shift the rest
